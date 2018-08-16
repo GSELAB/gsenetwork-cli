@@ -1,0 +1,2 @@
+# gsenetwork-cli
+GSENetwork CLI
