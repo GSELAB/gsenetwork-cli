@@ -13,4 +13,11 @@
 
 namespace cli {
 
+class Interface {
+public:
+    virtual std::string getName();
+
+    virtual bool isOpened();
+};
+
 } // end of namespace
