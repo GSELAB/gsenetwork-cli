@@ -11,13 +11,13 @@
 
 #pragma once
 
-namespace cli {
+#include <core/FixedHash.h>
 
-class Interface {
-public:
-    virtual std::string getName();
+using namespace core;
 
-    virtual bool isOpened();
-};
+namespace crypto {
 
+h256 sha256(bytesConstRef input) noexcept;
+
+h160 ripemd160(bytesConstRef input);
 } // end of namespace
