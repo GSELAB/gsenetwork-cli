@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <functional>
+#include "core/Ballot.h"
 
 namespace po = boost::program_options;
 
