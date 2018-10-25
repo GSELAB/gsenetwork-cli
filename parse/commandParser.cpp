@@ -12,7 +12,7 @@ namespace hdl
     std::string default_port = "50505";
     int default_version = 11;
 
-    client::Endpoint client(default_host, default_port, default_version);
+    client::Client client(default_host, default_port, default_version);
 
     int command_handler(po::variables_map & vm, po::options_description & desc)
     {
@@ -20,7 +20,6 @@ namespace hdl
 
         std::string host;
         std::string port;
-        std::string sender;
         std::string recipient;
         uint64_t value;
         uint64_t blocknumber;
@@ -50,19 +49,25 @@ namespace hdl
 
             return commandParser::SUCCESS;
         }
+        else if (vm.count("login"))
+        {
+            client.login();
+
+            return commandParser::SUCCESS;
+        }
+        else if (vm.count("logout"))
+        {
+            client.logout();
+
+            return commandParser::SUCCESS;
+        }
         else if (vm.count("getblock"))
         {
             blocknumber = vm["getblock"].as<uint64_t>();
 
             target = "/get_block";
-            std::stringstream ss;
-            ss  << "{"
-                << "\"blockNumber\""
-                << ":"
-                << blocknumber
-                << "}";
-            ss >> body;
-            client.getblock(target, body);
+
+            client.getblock(target, blocknumber);
 
             return commandParser::SUCCESS;
         }
@@ -75,55 +80,25 @@ namespace hdl
         }
         else if (vm.count("transfer"))
         {
-            if(vm.count("sender")){sender = vm["sender"].as<std::string>();}
             if(vm.count("recipient")){recipient = vm["recipient"].as<std::string>();}
             if(vm.count("value")){value = vm["value"].as<uint64_t>();}
 
             target = "/create_transaction";
-            std::stringstream ss;
-            ss  << "{"
-                << "\"sender\""
-                << ":"
-                << "\""
-                << sender
-                << "\""
-                << ","
-                << "\"recipient\""
-                << ":"
-                << "\""
-                << recipient
-                << "\""
-                << ","
-                << "\"value\""
-                << ":"
-                << value
-                << "}";
-            ss  >> body;
-            client.transfer(target, body);
+
+            client.transfer(target, recipient, value);
 
             return commandParser::SUCCESS;
         }
         else if (vm.count("tobeproducer"))
         {
-            if(vm.count("sender")){sender = vm["sender"].as<std::string>();}
-
             target = "/create_producer";
-            std::stringstream ss;
-            ss  << "{"
-                << "\"sender\""
-                << ":"
-                << "\""
-                << sender
-                << "\""
-                << "}";
-            ss  >> body;
-            client.toBeProducer(target, body);
+
+            client.toBeProducer(target);
 
             return commandParser::SUCCESS;
         }
         else if (vm.count("vote"))
         {
-            if(vm.count("sender")){sender = vm["sender"].as<std::string>();}
             if(vm.count("candidate")){candidates = vm["candidate"].as<std::vector<std::string> >();}
             if(vm.count("ballot")){ballots = vm["ballot"].as<std::vector<uint64_t> >();}
 
@@ -139,23 +114,8 @@ namespace hdl
                 Candidate candidate(address, value);
                 ballot.put(candidate);
             }
-            bytes data = ballot.getRLPData();
-            std::stringstream ss;
-            ss  << "{"
-                << "\"sender\""
-                << ":"
-                << "\""
-                << sender
-                << "\""
-                << ","
-                << "\"data\""
-                << ":"
-                << "\""
-                << data
-                << "\""
-                <<"}";
-            ss  >> body;
-            client.vote(target, body);
+
+            client.vote(target, ballot);
             return commandParser::SUCCESS;
         }
         else
@@ -185,9 +145,10 @@ void commandParser::init_command_line()
           ("transfer", "transfer accounts")
           ("tobeproducer","to be a producer")
           ("vote", "vote")
+          ("login","login")
+          ("logout","log out")
           ("host,h", po::value<std::string>(), "host ip")
           ("port,p", po::value<std::string>(), "port number")
-          ("sender,s",po::value<std::string>(), "sender")
           ("recipient,r",po::value<std::string>(),"recipient")
           ("value,v", po::value<uint64_t>(), "transfer amount")
           ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
