@@ -1,10 +1,14 @@
 #include <string>
 #include <sstream>
-#include "client/Http.h"
-#include "parser/commandParser.hpp"
+#include <client/Http.h>
+#include <parser/commandParser.hpp>
+
+#include <crypto/Common.h>
+#include <crypto/GKey.h>
 
 using namespace cmdparse;
 using namespace core;
+using namespace crypto;
 
 namespace hdl
 {

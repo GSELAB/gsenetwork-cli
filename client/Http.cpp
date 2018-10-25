@@ -1,7 +1,10 @@
-#include "client/Http.h"
+#include <client/Http.h>
+#include <core/Log.h>
+#include <crypto/GKey.h>
 
 using namespace core;
 using namespace client;
+using namespace crypto;
 
 void Endpoint::getblock(const std::string & target, const std::string & body)
 {
@@ -125,6 +128,9 @@ void Endpoint::transfer(const std::string & target, const std::string & body)
                 data.insert(data.begin(), str_transaction.begin(), str_transaction.end());
 
                 Secret sec("4077db9374f9498aff4b4ae6eb1400755655b50457930193948d2dc6cf70bf0f");
+                GKey key(sec);
+                CINFO << "Address:" << key.getAddress();
+                CINFO << "Public:" << key.getPublic();
                 Transaction transaction(data);
                 transaction.sign(sec);
 
