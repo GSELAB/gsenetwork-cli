@@ -3,6 +3,8 @@
 #include <beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <core/JsonHelper.h>
+#include <core/Transaction.h>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -21,10 +23,13 @@ public:
 
         void getblock(const std::string & target, const std::string & body);
 
-        void transfer(const std::string & target, const std::string & body);
-
         void getversion(const std::string & target);
 
+        void transfer(const std::string & target, const std::string & body);
+
+        void toBeProducer(const std::string & target, const std::string & body);
+
+        void vote(const std::string & target, const std::string & body);
 
         void sethost(const std::string & host){m_host = host;}
 
@@ -37,7 +42,8 @@ public:
         void setversion(const int version){m_version = version;}
 
         const int getversion(){return m_version;}
-
+private:
+        void broadcast(core::Transaction & transaction);
 private:
         std::string m_host = "127.0.0.1";
         std::string m_port = "50505";

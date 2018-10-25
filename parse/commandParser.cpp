@@ -4,6 +4,7 @@
 #include "parser/commandParser.hpp"
 
 using namespace cmdparse;
+using namespace core;
 
 namespace hdl
 {
@@ -17,30 +18,30 @@ namespace hdl
     {
         if(vm.count("quit")){std::cout<<"program is starting exit"<<std::endl;exit(0);}
 
-        std::string host = default_host;
-        std::string port = default_port;
-        int version = default_version;
-        std::string target;
-        std::string body;
+        std::string host;
+        std::string port;
         std::string sender;
         std::string recipient;
         uint64_t value;
+        uint64_t blocknumber;
+        std::vector<std::string> candidates;
+        std::vector<uint64_t> ballots;
 
-        bool hashost = false;
-        bool hasport = false;
-        bool hasdata = false;
-        bool hasversion = false;
-        bool hassender = false;
-        bool hasrecipient = false;
-        bool hasvalue = false;
+        std::string target;
+        std::string body;
 
-        if(vm.count("host")){hashost = true;host = vm["host"].as<std::string>();client.sethost(host);}
-        if(vm.count("port")){hasport = true;port = vm["port"].as<std::string>();client.setport(port);}
-        if(vm.count("data")){hasdata = true;body = vm["data"].as<std::string>();}
-        if(vm.count("version")){hasversion = true;version = vm["version"].as<int>();client.setversion(version);}
-        if(vm.count("sender")){hassender = true; sender = vm["sender"].as<std::string>();}
-        if(vm.count("recipient")){hasrecipient = true;recipient = vm["recipient"].as<std::string>();}
-        if(vm.count("value")){hasvalue = true;value = vm["value"].as<uint64_t>();}
+        if (vm.count("host"))
+        {
+            host = vm["host"].as<std::string>();
+
+            client.sethost(host);
+        }
+        if (vm.count("port"))
+        {
+            port = vm["port"].as<std::string>();
+
+            client.setport(port);
+        }
 
         if ( vm.count("help"))
         {
@@ -51,9 +52,16 @@ namespace hdl
         }
         else if (vm.count("getblock"))
         {
-            if(!hasdata){return commandParser::ERROR_IN_COMMAND_LINE;}
-            target = "/get_block";
+            blocknumber = vm["getblock"].as<uint64_t>();
 
+            target = "/get_block";
+            std::stringstream ss;
+            ss  << "{"
+                << "\"blockNumber\""
+                << ":"
+                << blocknumber
+                << "}";
+            ss >> body;
             client.getblock(target, body);
 
             return commandParser::SUCCESS;
@@ -67,15 +75,87 @@ namespace hdl
         }
         else if (vm.count("transfer"))
         {
-            if(!hassender||!hasrecipient||!hasvalue){return commandParser::ERROR_IN_COMMAND_LINE;}
+            if(vm.count("sender")){sender = vm["sender"].as<std::string>();}
+            if(vm.count("recipient")){recipient = vm["recipient"].as<std::string>();}
+            if(vm.count("value")){value = vm["value"].as<uint64_t>();}
 
-            //{"sender":"0xfffffffffffffffffffffffffffffffffffffffe","recipient":"0xfffffffffffffffffffffffffffffffffffffffe","value":1}//
-            body = "{\"sender\":\"" +sender +"\","+"\"recipient\":\""+recipient+"\"," +"\"value\":"+std::to_string(value)+"}";
-            std::cout<<"body = "<<body<<std::endl;
             target = "/create_transaction";
-
+            std::stringstream ss;
+            ss  << "{"
+                << "\"sender\""
+                << ":"
+                << "\""
+                << sender
+                << "\""
+                << ","
+                << "\"recipient\""
+                << ":"
+                << "\""
+                << recipient
+                << "\""
+                << ","
+                << "\"value\""
+                << ":"
+                << value
+                << "}";
+            ss  >> body;
             client.transfer(target, body);
 
+            return commandParser::SUCCESS;
+        }
+        else if (vm.count("tobeproducer"))
+        {
+            if(vm.count("sender")){sender = vm["sender"].as<std::string>();}
+
+            target = "/create_producer";
+            std::stringstream ss;
+            ss  << "{"
+                << "\"sender\""
+                << ":"
+                << "\""
+                << sender
+                << "\""
+                << "}";
+            ss  >> body;
+            client.toBeProducer(target, body);
+
+            return commandParser::SUCCESS;
+        }
+        else if (vm.count("vote"))
+        {
+            if(vm.count("sender")){sender = vm["sender"].as<std::string>();}
+            if(vm.count("candidate")){candidates = vm["candidate"].as<std::vector<std::string> >();}
+            if(vm.count("ballot")){ballots = vm["ballot"].as<std::vector<uint64_t> >();}
+
+            if(candidates.size() != ballots.size()){return commandParser::ERROR_IN_COMMAND_LINE;}
+            int len = static_cast<int>(candidates.size());
+
+            target = "/create_vote";
+
+            Ballot ballot;
+            for(int i=0; i<len; i++){
+                Address address(candidates[i]);
+                uint64_t value(ballots[i]);
+                Candidate candidate(address, value);
+                ballot.put(candidate);
+            }
+            bytes data = ballot.getRLPData();
+            std::stringstream ss;
+            ss  << "{"
+                << "\"sender\""
+                << ":"
+                << "\""
+                << sender
+                << "\""
+                << ","
+                << "\"data\""
+                << ":"
+                << "\""
+                << data
+                << "\""
+                <<"}";
+            ss  >> body;
+            client.vote(target, body);
             return commandParser::SUCCESS;
         }
         else
@@ -100,16 +180,18 @@ void commandParser::init_command_line()
         desc.add_options()
           ("help,?", "Print help messages")
           ("quit,q", "quit")
-          ("getblock", "get a block by number")
+          ("getblock", po::value<uint64_t>(),"get a block by number")
           ("getversion", "get version")
-          ("transfer,t", "transfer accounts")
-          ("sender,s",po::value<std::string>(), "sender")
-          ("recipient,r",po::value<std::string>(),"recipient")
-          ("version,v",po::value<uint64_t>(),"http version")
-          ("value,n", po::value<uint64_t>(), "value")
+          ("transfer", "transfer accounts")
+          ("tobeproducer","to be a producer")
+          ("vote", "vote")
           ("host,h", po::value<std::string>(), "host ip")
           ("port,p", po::value<std::string>(), "port number")
-          ("data,d", po::value<std::string>(), "http request body");
+          ("sender,s",po::value<std::string>(), "sender")
+          ("recipient,r",po::value<std::string>(),"recipient")
+          ("value,v", po::value<uint64_t>(), "transfer amount")
+          ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
+          ("ballot,b",po::value<std::vector<uint64_t> >(),"ballot");
 
     }catch(std::exception& e){
         std::cerr << "Unhandled Exception reached the top of init_command_line: "
@@ -118,8 +200,22 @@ void commandParser::init_command_line()
    }
 }
 
+/* | --command | [-sub-command value] [-sub-command value] |*/
 int commandParser::parse_command_line(int argc, std::vector<const char *> & argv)
 {
+    int size = static_cast<int>(argv.size()-1);
+    if(argc != size){
+        throw std::length_error("argc != argv.size()-1");
+    }
+    if(argc<1)
+        return SUCCESS;
+
+    std::string command(argv[1]);
+    if(command == "?"){command = "help";}
+    command = "--" + command;
+    delete [] argv[1];
+    argv[1] = command.c_str();
+
     po::variables_map vm;
     try
     {
@@ -133,6 +229,7 @@ int commandParser::parse_command_line(int argc, std::vector<const char *> & argv
         std::cerr << desc << std::endl;
         return ERROR_IN_COMMAND_LINE;
     }
+
     command_handler(vm, desc);
 
     return SUCCESS;
