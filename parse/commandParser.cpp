@@ -161,7 +161,6 @@ void commandParser::init_command_line()
    }
 }
 
-/* | --command | [-sub-command value] [-sub-command value] |*/
 int commandParser::parse_command_line(int argc, std::vector<const char *> & argv)
 {
     int size = static_cast<int>(argv.size()-1);

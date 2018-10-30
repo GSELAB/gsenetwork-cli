@@ -164,7 +164,7 @@ void Client::transfer(const std::string & target, const std::string & recipient,
         {
             // to do
             std::string resp_body = resp.body;
-            std::cout<< resp_body <<std::endl;
+            //std::cout<< resp_body <<std::endl;
 
             Json::Reader reader(Json::Features::strictMode());
             Json::Value root;
@@ -243,7 +243,7 @@ void Client::toBeProducer(const std::string & target)
         beast::flat_buffer buffer;
         beast::http::read(m_socket, buffer, resp);
 
-        std::cout << resp << std::endl;
+        //std::cout << resp << std::endl;
         {
             // to do
             std::string resp_body = resp.body;
@@ -332,7 +332,7 @@ void Client::vote(const std::string & target, Ballot & ballot)
         beast::flat_buffer buffer;
         beast::http::read(m_socket, buffer, resp);
 
-        std::cout << resp << std::endl;
+        //std::cout << resp << std::endl;
         {
             // to do
             std::string resp_body = resp.body;
@@ -393,8 +393,8 @@ void Client::broadcast(core::Transaction & transaction)
         req.set(http::field::content_length, std::to_string(body.size()));
         req.body = body;
 
-        CINFO << "Client::broadcast";
-        CINFO<< body;
+        CINFO << "Client::broadcast\n";
+        std::cout<< body << std::endl;
 
         beast::http::write(m_socket, req);
 
