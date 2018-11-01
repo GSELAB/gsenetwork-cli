@@ -253,14 +253,14 @@ void Client::toBeProducer(const std::string & target)
             std::string ret;
             if(reader.parse(resp_body, root))
             {
-                ChainID chainID = std::stoll(root["ChainID"].asString());
-                uint32_t type = std::stol(root["type"].asString());
+                ChainID chainID = std::stoll(root["ChainID"].asString(),0,16);
+                uint32_t type = std::stol(root["type"].asString(),0,16);
                 Address sender = Address(root["sender"].asString());
                 Address recipient = Address(root["recipient"].asString());
                 bytes data;
                 std::string dataStr = root["data"].asString();
                 data.insert(data.begin(), dataStr.begin(), dataStr.end());
-                uint64_t value = std::stoll(root["value"].asString());
+                uint64_t value = std::stoll(root["value"].asString(),0,16);
                 Transaction transaction;
                 transaction.setChainID(chainID);
                 transaction.setType(type);
@@ -341,14 +341,14 @@ void Client::vote(const std::string & target, Ballot & ballot)
             std::string ret;
             if(reader.parse(resp_body, root))
             {
-                ChainID chainID = std::stoll(root["ChainID"].asString());
-                uint32_t type = std::stol(root["type"].asString());
+                ChainID chainID = std::stoll(root["ChainID"].asString(),0,16);
+                uint32_t type = std::stol(root["type"].asString(),0,16);
                 Address sender = Address(root["sender"].asString());
                 Address recipient = Address(root["recipient"].asString());
                 bytes data;
                 std::string dataStr = root["data"].asString();
                 data.insert(data.begin(), dataStr.begin(), dataStr.end());
-                uint64_t value = std::stoll(root["value"].asString());
+                uint64_t value = std::stoll(root["value"].asString(),0,16);
                 Transaction transaction;
                 transaction.setChainID(chainID);
                 transaction.setType(type);
