@@ -1,13 +1,14 @@
 #include <client/Http.h>
 #include <core/Log.h>
 #include <crypto/GKey.h>
+#include <client/JsonRequest.h>
 
 using namespace core;
 using namespace client;
 using namespace crypto;
 using namespace chain;
 
-Secret sec("4077db9374f9498aff4b4ae6eb1400755655b50457930193948d2dc6cf70bf0f");
+Secret sec("63D065F2D813D790427C8583E384359828BFF6A9F7012F9D28C111D7F2A2EF88");
 Secret EmptySecret;
 
 void Client::login()
@@ -22,392 +23,147 @@ void Client::logout()
     m_key.setSecret(EmptySecret);
 }
 
-void Client::getblock(const std::string & target, const uint64_t blocknumber)
+void Client::checkLogin()
 {
-    beast::http::request<beast::http::string_body> req;
-    beast::http::response<http::string_body> resp;
-
-    std::string body;
-    std::stringstream ss;
-    ss  << "{"
-        << "\"blockNumber\""
-        << ":"
-        << blocknumber
-        << "}";
-    ss >> body;
-    try
-    {
-        boost::asio::connect(m_socket,
-                        m_resolver.resolve(boost::asio::ip::tcp::resolver::query{m_host, m_port}));
-        req.method(http::verb::post);
-        req.target(target);
-        req.version = m_version;
-        req.set(http::field::host, m_host);
-        req.set(http::field::user_agent, "Beast");
-
-        req.set(http::field::content_type, "application/json");
-        req.set(http::field::content_length, std::to_string(body.size()));
-        req.body = body;
-
-        beast::http::write(m_socket, req);
-
-        beast::flat_buffer buffer;
-        beast::http::read(m_socket, buffer, resp);
-
-        //std::cout << resp << std::endl;
-        {
-            // to do
-            std::string resp_body = resp.body;
-            std::cout<<resp_body<<std::endl;
-        }
-
-        boost::system::error_code ec;
-        m_socket.shutdown(tcp::socket::shutdown_both,ec);
-
-        if(ec && ec != boost::system::errc::not_connected)
-            throw boost::system::system_error{ec};
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
+    if (!m_isLogin) {
+        throw ClientException("Login status is false.");
     }
 }
 
-void Client::getversion(const std::string & target)
+void Client::send(std::string const& cmd, Json::Value const& value, std::function<void(std::string const&)> callback)
 {
-    beast::http::request<beast::http::string_body> req;
-    beast::http::response<http::string_body> resp;
-    try
-    {
-        boost::asio::connect(m_socket,
-                        m_resolver.resolve(boost::asio::ip::tcp::resolver::query{m_host, m_port}));
-        req.method(http::verb::post);
-        req.target(target);
-        req.version = m_version;
-        req.set(http::field::host, m_host);
-        req.set(http::field::user_agent, "Beast");
-
-        req.set(http::field::content_type, "application/json");
-
-        beast::http::write(m_socket, req);
-
+    beast::http::request<beast::http::string_body> request;
+    boost::asio::connect(m_socket,
+        m_resolver.resolve(boost::asio::ip::tcp::resolver::query{m_host, m_port}));
+    request.method(http::verb::post);
+    request.version = m_version;
+    request.set(http::field::host, m_host);
+    request.set(http::field::user_agent, "Beast");
+    request.set(http::field::content_type, "application/json");
+    request.target(cmd);
+    request.body = value.toStyledString();
+    request.set(http::field::content_length, std::to_string(request.body.size()));
+    beast::http::write(m_socket, request);
+    if (callback) {
+        beast::http::response<http::string_body> response;
         beast::flat_buffer buffer;
-        beast::http::read(m_socket, buffer, resp);
-
-        //std::cout << resp << std::endl;
-        {
-            // to do
-            std::string resp_body = resp.body;
-            std::cout<<resp_body<<std::endl;
-        }
-
-        boost::system::error_code ec;
-        m_socket.shutdown(tcp::socket::shutdown_both,ec);
-
-        if(ec && ec != boost::system::errc::not_connected)
-            throw boost::system::system_error{ec};
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
+        beast::http::read(m_socket, buffer, response);
+        callback(response.body);
     }
 
+    boost::system::error_code ec;
+    m_socket.shutdown(tcp::socket::shutdown_both,ec);
+    if(ec && ec != boost::system::errc::not_connected)
+        throw boost::system::system_error{ec};
 }
 
-void Client::transfer(const std::string & target, const std::string & recipient, uint64_t value)
+void Client::broadcast(Transaction& tx)
 {
-    if(!m_isLogin){
-        CINFO << "please login first";
-        return;
-    }
-    beast::http::request<beast::http::string_body> req;
-    beast::http::response<http::string_body> resp;
-    std::string body;
-    std::string sender = m_key.getAddress().hex();
-    std::stringstream ss;
-    ss  << "{"
-        << "\"sender\""
-        << ":"
-        << "\""
-        << sender
-        << "\""
-        << ","
-        << "\"recipient\""
-        << ":"
-        << "\""
-        << recipient
-        << "\""
-        << ","
-        << "\"value\""
-        << ":"
-        << value
-        << "}";
-    ss  >> body;
-    try
-    {
-        boost::asio::connect(m_socket,
-                        m_resolver.resolve(boost::asio::ip::tcp::resolver::query{m_host, m_port}));
-        req.method(http::verb::post);
-        req.target(target);
-        req.version = m_version;
-        req.set(http::field::host, m_host);
-        req.set(http::field::user_agent, "Beast");
+    send("/push_transaction", toJson(tx), [this] (std::string const& buffer) {
+        std::cout << buffer << std::endl;
+    });
+}
 
-        req.set(http::field::content_type, "application/json");
-        req.set(http::field::content_length, std::to_string(body.size()));
-        req.body = body;
-
-        beast::http::write(m_socket, req);
-
-        beast::flat_buffer buffer;
-        beast::http::read(m_socket, buffer, resp);
-
-        //std::cout << resp << std::endl;
-        {
-            // to do
-            std::string resp_body = resp.body;
-            //std::cout<< resp_body <<std::endl;
-
+void Client::getVersion(std::string const& cmd)
+{
+    try {
+        Json::Value requestVersion = toRequestVersion();
+        send(cmd, requestVersion, [this] (std::string const& buffer) {
             Json::Reader reader(Json::Features::strictMode());
             Json::Value root;
-            std::string ret;
-            if(reader.parse(resp_body, root))
-            {
-                ChainID chainID = std::stoll(root["ChainID"].asString(),0,16);
-                uint32_t type = std::stol(root["type"].asString(),0,16);
-                Address sender = Address(root["sender"].asString());
-                Address recipient = Address(root["recipient"].asString());
-                bytes data;
-                std::string dataStr = root["data"].asString();
-                data.insert(data.begin(), dataStr.begin(), dataStr.end());
-                uint64_t value = std::stoll(root["value"].asString(), 0, 16);
-                Transaction transaction;
-                transaction.setChainID(chainID);
-                transaction.setType(type);
-                transaction.setSender(sender);
-                transaction.setRecipient(recipient);
-                transaction.setData(data);
-                transaction.setValue(value);
-                transaction.sign(m_key.getSecret());
-
-                broadcast(transaction);
+            if(reader.parse(buffer, root)) {
+                std::cout << root["version"] << std::endl;
+            } else {
+                throw ClientException("version - parse json from rpc error.");
             }
-        }
-
-        boost::system::error_code ec;
-        m_socket.shutdown(tcp::socket::shutdown_both,ec);
-
-        if(ec && ec != boost::system::errc::not_connected)
-            throw boost::system::system_error{ec};
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
     }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-
 }
-void Client::toBeProducer(const std::string & target)
+
+void Client::getBlock(std::string const& cmd, uint64_t number)
 {
-    if(!m_isLogin){
-        CINFO << "please login first";
-        return;
+    try {
+        Json::Value requestBlock = toRequestBlock(number);
+        CINFO << requestBlock.toStyledString();
+        send(cmd, requestBlock, [this] (std::string const& buffer) {
+            std::cout << buffer << std::endl;
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
     }
-    beast::http::request<beast::http::string_body> req;
-    beast::http::response<http::string_body> resp;
+}
 
-    std::string body;
-    std::string sender = m_key.getAddress().hex();
-    std::stringstream ss;
-    ss  << "{"
-        << "\"sender\""
-        << ":"
-        << "\""
-        << sender
-        << "\""
-        << "}";
-    ss  >> body;
-    try
-    {
-        boost::asio::connect(m_socket,
-                        m_resolver.resolve(boost::asio::ip::tcp::resolver::query{m_host, m_port}));
-        req.method(http::verb::post);
-        req.target(target);
-        req.version = m_version;
-        req.set(http::field::host, m_host);
-        req.set(http::field::user_agent, "Beast");
+void Client::transfer(std::string const& cmd, std::string const& recipient, uint64_t value)
+{
+    try {
+        checkLogin();
 
-        req.set(http::field::content_type, "application/json");
-        req.set(http::field::content_length, std::to_string(body.size()));
-        req.body = body;
-
-        beast::http::write(m_socket, req);
-
-        beast::flat_buffer buffer;
-        beast::http::read(m_socket, buffer, resp);
-
-        //std::cout << resp << std::endl;
-        {
-            // to do
-            std::string resp_body = resp.body;
-
+        Address recipientAddress(recipient);
+        Json::Value requestTransfer = toRequestTransfer(m_key.getAddress(), recipientAddress, value);
+        send(cmd, requestTransfer, [this] (std::string const& buffer) {
             Json::Reader reader(Json::Features::strictMode());
             Json::Value root;
-            std::string ret;
-            if(reader.parse(resp_body, root))
-            {
-                ChainID chainID = std::stoll(root["ChainID"].asString(),0,16);
-                uint32_t type = std::stol(root["type"].asString(),0,16);
-                Address sender = Address(root["sender"].asString());
-                Address recipient = Address(root["recipient"].asString());
-                bytes data;
-                std::string dataStr = root["data"].asString();
-                data.insert(data.begin(), dataStr.begin(), dataStr.end());
-                uint64_t value = std::stoll(root["value"].asString(),0,16);
-                Transaction transaction;
-                transaction.setChainID(chainID);
-                transaction.setType(type);
-                transaction.setSender(sender);
-                transaction.setRecipient(recipient);
-                transaction.setData(data);
-                transaction.setValue(value);
-                transaction.sign(m_key.getSecret());
-
-                broadcast(transaction);
+            if(reader.parse(buffer, root)) {
+                Transaction tx = toTransaction(root);
+                tx.sign(m_key.getSecret());
+                broadcast(tx);
+            } else {
+                throw ClientException("transfer - parse json from rpc error.");
             }
-        }
-
-        boost::system::error_code ec;
-        m_socket.shutdown(tcp::socket::shutdown_both,ec);
-
-        if(ec && ec != boost::system::errc::not_connected)
-            throw boost::system::system_error{ec};
+        });
+    } catch (ClientException& e) {
+        CERROR << e.what();
+    } catch(std::exception& e) {
+        CERROR << e.what();
     }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
+
 }
-
-void Client::vote(const std::string & target, Ballot & ballot)
+void Client::toBeProducer(std::string const& cmd)
 {
-    if(!m_isLogin){
-        CINFO << "please login first";
-        return;
-    }
-    beast::http::request<beast::http::string_body> req;
-    beast::http::response<http::string_body> resp;
+    try {
+        checkLogin();
 
-    std::string body;
-    std::string sender = m_key.getAddress().hex();
-    bytes data = ballot.getRLPData();
-    std::stringstream ss;
-    ss  << "{"
-        << "\"sender\""
-        << ":"
-        << "\""
-        << sender
-        << "\""
-        << ","
-        << "\"data\""
-        << ":"
-        << "\""
-        << data
-        << "\""
-        <<"}";
-    ss  >> body;
-    try
-    {
-        boost::asio::connect(m_socket,
-                        m_resolver.resolve(boost::asio::ip::tcp::resolver::query{m_host, m_port}));
-        req.method(http::verb::post);
-        req.target(target);
-        req.version = m_version;
-        req.set(http::field::host, m_host);
-        req.set(http::field::user_agent, "Beast");
-
-        req.set(http::field::content_type, "application/json");
-        req.set(http::field::content_length, std::to_string(body.size()));
-        req.body = body;
-
-        beast::http::write(m_socket, req);
-
-        beast::flat_buffer buffer;
-        beast::http::read(m_socket, buffer, resp);
-
-        //std::cout << resp << std::endl;
-        {
-            // to do
-            std::string resp_body = resp.body;
+        Json::Value requestBeProducer = toRequestBeProducer(m_key.getAddress());
+        send(cmd, requestBeProducer, [this] (std::string const& buffer) {
             Json::Reader reader(Json::Features::strictMode());
             Json::Value root;
-            std::string ret;
-            if(reader.parse(resp_body, root))
-            {
-                ChainID chainID = std::stoll(root["ChainID"].asString(),0,16);
-                uint32_t type = std::stol(root["type"].asString(),0,16);
-                Address sender = Address(root["sender"].asString());
-                Address recipient = Address(root["recipient"].asString());
-                bytes data;
-                std::string dataStr = root["data"].asString();
-                data.insert(data.begin(), dataStr.begin(), dataStr.end());
-                uint64_t value = std::stoll(root["value"].asString(),0,16);
-                Transaction transaction;
-                transaction.setChainID(chainID);
-                transaction.setType(type);
-                transaction.setSender(sender);
-                transaction.setRecipient(recipient);
-                transaction.setData(data);
-                transaction.setValue(value);
-                transaction.sign(m_key.getSecret());
-
-                broadcast(transaction);
+            if(reader.parse(buffer, root)) {
+                Transaction tx = toTransaction(root);
+                tx.sign(m_key.getSecret());
+                broadcast(tx);
+            } else {
+                throw ClientException("tobe producer - parse json from rpc error.");
             }
-        }
-
-        boost::system::error_code ec;
-        m_socket.shutdown(tcp::socket::shutdown_both,ec);
-
-        if(ec && ec != boost::system::errc::not_connected)
-            throw boost::system::system_error{ec};
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
+        });
+    } catch (ClientException& e) {
+        CERROR << e.what();
+    } catch(std::exception& e) {
+        CERROR << e.what();
     }
 }
 
-void Client::broadcast(core::Transaction & transaction)
+void Client::vote(std::string const& cmd, Ballot& ballot)
 {
-    beast::http::request<beast::http::string_body> req;
-    std::string body;
-    body = toJson(transaction).toStyledString();
-    try
-    {
-        boost::asio::connect(m_socket,
-                        m_resolver.resolve(boost::asio::ip::tcp::resolver::query{m_host, m_port}));
-        req.method(http::verb::post);
-        req.target("/push_transaction");
-        req.version = m_version;
-        req.set(http::field::host, m_host);
-        req.set(http::field::user_agent, "Beast");
+    try {
+        checkLogin();
 
-        req.set(http::field::content_type, "application/json");
-        req.set(http::field::content_length, std::to_string(body.size()));
-        req.body = body;
-
-        CINFO << "Client::broadcast\n";
-        std::cout<< body << std::endl;
-
-        beast::http::write(m_socket, req);
-
-        boost::system::error_code ec;
-        m_socket.shutdown(tcp::socket::shutdown_both,ec);
-
-        if(ec && ec != boost::system::errc::not_connected)
-            throw boost::system::system_error{ec};
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
+        Json::Value requestVote = toRequestVote(m_key.getAddress(), ballot);
+        send(cmd, requestVote, [this] (std::string const& buffer) {
+            Json::Reader reader(Json::Features::strictMode());
+            Json::Value root;
+            if(reader.parse(buffer, root)) {
+                Transaction tx = toTransaction(root);
+                tx.sign(m_key.getSecret());
+                broadcast(tx);
+            } else {
+                throw ClientException("vote - parse json from rpc error.");
+            }
+        });
+    } catch (ClientException& e) {
+        CERROR << e.what();
+    } catch(std::exception const& e) {
+        CERROR << e.what();
     }
 }

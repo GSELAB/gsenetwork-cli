@@ -12,7 +12,8 @@ using namespace crypto;
 
 namespace hdl
 {
-    std::string default_host = "132.232.52.144";
+    //std::string default_host = "132.232.52.156";
+    std::string default_host = "127.0.0.1";
     std::string default_port = "50505";
     int default_version = 11;
 
@@ -20,97 +21,74 @@ namespace hdl
 
     int command_handler(po::variables_map & vm, po::options_description & desc)
     {
-        if(vm.count("quit")){std::cout<<"program is starting exit"<<std::endl;exit(0);}
+        if (vm.count("quit")) {
+            std::cout<<"program is starting exit"<<std::endl;
+            exit(0);
+        }
 
         std::string host;
         std::string port;
         std::string recipient;
         uint64_t value;
-        uint64_t blocknumber;
+        uint64_t number;
         std::vector<std::string> candidates;
         std::vector<uint64_t> ballots;
 
-        std::string target;
-        std::string body;
-
-        if (vm.count("host"))
-        {
+        if (vm.count("host")) {
             host = vm["host"].as<std::string>();
-
-            client.sethost(host);
+            client.setHost(host);
         }
-        if (vm.count("port"))
-        {
+
+        if (vm.count("port")) {
             port = vm["port"].as<std::string>();
-
-            client.setport(port);
+            client.setPort(port);
         }
 
-        if ( vm.count("help"))
-        {
-            std::cout << "Basic Command Line Parameter App" << std::endl
+        if ( vm.count("help")) {
+            CINFO << "Basic Command Line Parameter App" << std::endl
                       << desc << std::endl;
-
             return commandParser::SUCCESS;
-        }
-        else if (vm.count("login"))
-        {
+        } else if (vm.count("login")) {
             client.login();
-
             return commandParser::SUCCESS;
-        }
-        else if (vm.count("logout"))
-        {
+        } else if (vm.count("logout")) {
             client.logout();
-
             return commandParser::SUCCESS;
-        }
-        else if (vm.count("getblock"))
-        {
-            blocknumber = vm["getblock"].as<uint64_t>();
-
-            target = "/get_block";
-
-            client.getblock(target, blocknumber);
-
+        } else if (vm.count("getblock")) {
+            number = vm["getblock"].as<uint64_t>();
+            client.getBlock("/get_block", number);
             return commandParser::SUCCESS;
-        }
-        else if (vm.count("getversion"))
-        {
-            target = "/get_version";
-            client.getversion(target);
-
+        } else if (vm.count("getversion")) {
+            client.getVersion("/get_version");
             return commandParser::SUCCESS;
-        }
-        else if (vm.count("transfer"))
-        {
-            if(vm.count("recipient")){recipient = vm["recipient"].as<std::string>();}
-            if(vm.count("value")){value = vm["value"].as<uint64_t>();}
+        } else if (vm.count("transfer")) {
+            if (vm.count("recipient")) {
+                recipient = vm["recipient"].as<std::string>();
+            }
 
-            target = "/create_transaction";
+            if (vm.count("value")) {
+                value = vm["value"].as<uint64_t>();
+            }
 
-            client.transfer(target, recipient, value);
-
+            client.transfer("/create_transaction", recipient, value);
             return commandParser::SUCCESS;
-        }
-        else if (vm.count("tobeproducer"))
-        {
-            target = "/create_producer";
-
-            client.toBeProducer(target);
-
+        } else if (vm.count("tobeproducer")) {
+            client.toBeProducer("/create_producer");
             return commandParser::SUCCESS;
-        }
-        else if (vm.count("vote"))
-        {
-            if(vm.count("candidate")){candidates = vm["candidate"].as<std::vector<std::string> >();}
-            if(vm.count("ballot")){ballots = vm["ballot"].as<std::vector<uint64_t> >();}
+        } else if (vm.count("vote")) {
+            if (vm.count("candidate")) {
+                candidates = vm["candidate"].as<std::vector<std::string> >();
+            }
 
-            if(candidates.size() != ballots.size()){return commandParser::ERROR_IN_COMMAND_LINE;}
+            if (vm.count("ballot")) {
+                ballots = vm["ballot"].as<std::vector<uint64_t> >();
+            }
+
+            if (candidates.size() != ballots.size()) {
+                return commandParser::ERROR_IN_COMMAND_LINE;
+            }
+
             int len = static_cast<int>(candidates.size());
-
-            target = "/create_vote";
-
             Ballot ballot;
             for(int i=0; i<len; i++){
                 Address address(candidates[i]);
@@ -119,11 +97,9 @@ namespace hdl
                 ballot.put(candidate);
             }
 
-            client.vote(target, ballot);
+            client.vote("/create_vote", ballot);
             return commandParser::SUCCESS;
-        }
-        else
-        {
+        } else {
             return commandParser::ERROR_IN_COMMAND_LINE;
         }
     }
@@ -133,44 +109,41 @@ namespace hdl
 void commandParser::init()
 {
     init_command_line();
-
     set_command_parse_handler(hdl::command_handler);
 }
 
 void commandParser::init_command_line()
 {
-    try
-    {
-        desc.add_options()
-          ("help,?", "Print help messages")
-          ("quit,q", "quit")
-          ("getblock", po::value<uint64_t>(),"get a block by number")
-          ("getversion", "get version")
-          ("transfer", "transfer accounts")
-          ("tobeproducer","to be a producer")
-          ("vote", "vote")
-          ("login","login")
-          ("logout","log out")
-          ("host,h", po::value<std::string>(), "host ip")
-          ("port,p", po::value<std::string>(), "port number")
-          ("recipient,r",po::value<std::string>(),"recipient")
-          ("value,v", po::value<uint64_t>(), "transfer amount")
-          ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
-          ("ballot,b",po::value<std::vector<uint64_t> >(),"ballot");
+    try {
+    desc.add_options()
+        ("help,?", "Print help messages")
+        ("quit,q", "quit")
+        ("getblock", po::value<uint64_t>(),"get a block by number")
+        ("getversion", "get version")
+        ("transfer", "transfer accounts")
+        ("tobeproducer","to be a producer")
+        ("vote", "vote")
+        ("login","login")
+        ("logout","log out")
+        ("host,h", po::value<std::string>(), "host ip")
+        ("port,p", po::value<std::string>(), "port number")
+        ("recipient,r",po::value<std::string>(),"recipient")
+        ("value,v", po::value<uint64_t>(), "transfer amount")
+        ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
+        ("ballot,b",po::value<std::vector<uint64_t> >(),"ballot");
 
-    }catch(std::exception& e){
-        std::cerr << "Unhandled Exception reached the top of init_command_line: "
-                  << e.what() << ", application will now exit" << std::endl;
-    exit(1);
+    } catch(std::exception& e) {
+        CERROR << "Unhandled Exception reached the top of init_command_line: "
+                  << e.what() << ", application will now exit";
+        exit(1);
    }
 }
 
 int commandParser::parse_command_line(int argc, std::vector<const char *> & argv)
 {
     int size = static_cast<int>(argv.size()-1);
-    if(argc != size){
+    if(argc != size)
         throw std::length_error("argc != argv.size()-1");
-    }
     if(argc<1)
         return SUCCESS;
 
@@ -179,22 +152,16 @@ int commandParser::parse_command_line(int argc, std::vector<const char *> & argv
     command = "--" + command;
     delete [] argv[1];
     argv[1] = command.c_str();
-
     po::variables_map vm;
-    try
-    {
+    try {
         po::store(po::parse_command_line(argc, &(argv[0]), desc), vm);
-
         po::notify(vm);
-    }
-    catch(po::error& e)
-    {
-        std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-        std::cerr << desc << std::endl;
+    } catch(po::error& e) {
+        CERROR << "ERROR: " << e.what();
+        CERROR << desc;
         return ERROR_IN_COMMAND_LINE;
     }
 
     command_handler(vm, desc);
-
     return SUCCESS;
 }
