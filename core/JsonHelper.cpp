@@ -7,12 +7,9 @@ namespace core {
 namespace js_util {
 bytes jsToBytes(string const& _s, OnFailed _f)
 {
-	try
-	{
+	try {
 		return fromHex(_s, WhenError::Throw);
-	}
-	catch (...)
-	{
+	} catch (...) {
 		if (_f == OnFailed::InterpretRaw)
 			return asBytes(_s);
 		else if (_f == OnFailed::Throw)
@@ -58,8 +55,7 @@ bytes unpadLeft(bytes _b)
 
 string fromRaw(h256 _n)
 {
-	if (_n)
-	{
+	if (_n) {
 		string s((char const*)_n.data(), 32);
 		auto l = s.find_first_of('\0');
 		if (!l)
@@ -80,6 +76,23 @@ using namespace js_util;
 Json::Value toJson(Account const& account)
 {
     Json::Value ret;
+    ret["address"] = toJS(account.getAddress());
+    ret["balance"] = toJS(account.getBalance());
+    ret["timestamp"] = toJS(account.getTimestamp());
+    return ret;
+}
+
+Json::Value toJson(Producer const& producer)
+{
+    Json::Value ret;
+    ret["address"] = toJS(producer.getAddress());
+    ret["timestamp"] = toJS(producer.getTimestamp());
+    Json::Value voters;
+    for (auto i : producer.getVoters()) {
+        voters[toString(i.first)] = toJS(i.second);
+    }
+    ret["voters"] = voters;
+    ret["total-votes"] = toJS(producer.getVotes());
     return ret;
 }
 
@@ -116,7 +129,8 @@ Json::Value toJson(Transaction& transaction)
     ret["recipient"] = toJS(transaction.getRecipient());
     ret["data"] = toJS(transaction.getData());
     ret["value"] = toJS(transaction.getValue());
-    // ret["signature"] = toJS(transaction.getSignature());
+    Signature sig = *(Signature*)&transaction.getSignature();
+    ret["signature"] = toJS(sig);
     ret["hash"] = toJS(transaction.getHash());
     return ret;
 }
@@ -139,6 +153,13 @@ Json::Value toJson(std::string const& key, std::string const& value)
 {
     Json::Value ret;
     ret[key] = value;
+    return ret;
+}
+
+Json::Value toJson(std::string const& key, uint64_t value)
+{
+    Json::Value ret;
+    ret[key] = toJS(value);
     return ret;
 }
 
