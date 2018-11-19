@@ -5,12 +5,10 @@
 #include <core/Block.h>
 
 using namespace core;
-using namespace chain;
 
 namespace crypto {
 
 bool isValidSig(Transaction& transaction);
 
 bool isValidSig(Block& block);
-
 }

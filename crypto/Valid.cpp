@@ -13,5 +13,4 @@ bool isValidSig(Block& block)
     Public pubKey = recover(block.getSignature(), block.getHash());
     return toAddress(pubKey) == block.getProducer();
 }
-
 }

@@ -80,6 +80,8 @@ public:
 
     void setValue(uint64_t value) { m_value = value; }
 
+    void setSignature(SignatureStruct const& sig) { m_signature = sig; }
+
     chain::ChainID getChainID() const { return m_chainID; }
 
     uint32_t getType() const { return m_type; }
@@ -88,7 +90,7 @@ public:
 
     Address const& getRecipient() const { return m_recipient; }
 
-    uint64_t getTimestamp() const { return m_timestamp; }
+    int64_t getTimestamp() const { return m_timestamp; }
 
     bytes const& getData() const { return m_data; }
 
@@ -96,21 +98,18 @@ public:
 
     SignatureStruct const& getSignature() const { return m_signature; }
 
-    // @override
-    bytes getKey();
+    virtual bytes getKey() override;
 
-    // @override
-    bytes getRLPData();
+    virtual bytes getRLPData() override;
 
-    // @override
-    Object::ObjectType getObjectType() const { return Object::TransactionType; }
+    virtual Object::ObjectType getObjectType() const override { return Object::TransactionType; }
 
 private:
     chain::ChainID m_chainID;
     uint32_t m_type;
     Address m_sender;
     Address m_recipient;
-    uint64_t m_timestamp;
+    int64_t m_timestamp;
     bytes m_data;
     uint64_t m_value;
     SignatureStruct m_signature;
@@ -119,5 +118,14 @@ private:
 };
 
 using Transactions = vector<Transaction>;
+
+using TransactionPtr = std::shared_ptr<Transaction>;
+
+using TxID = h256;
+using TransactionID = TxID;
+
+extern Transaction EmptyTransaction;
+
+extern TransactionPtr EmptyTransactionPtr;
 
 } /* end of namespace */
