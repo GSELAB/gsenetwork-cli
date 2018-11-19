@@ -19,7 +19,7 @@
 
 namespace core {
 
-#define PRODUCER_FIELDS (3)
+#define PRODUCER_FIELDS (4)
 
 class Producer: public Object {
 public:
@@ -37,6 +37,10 @@ public:
 
     bool operator!=(Producer const& producer) const;
 
+    bool operator>(Producer const& producer) const;
+
+    bool operator<(Producer const& producer) const;
+
     void streamRLP(RLPStream& rlpStream) const;
 
     void setVotes(uint64_t votes);
@@ -47,26 +51,77 @@ public:
 
     int64_t getTimestamp() const { return m_timestamp; }
 
-    std::map<Address, uint64_t> const& getVotersMap() const { return m_votersMap; }
+    std::map<Address, uint64_t> const& getVoters() const { return m_voters; }
 
     uint64_t getVotes() const { return m_votes; }
 
-    // @override
-    bytes getKey();
+    virtual bytes getKey() override;
 
-    // @override
-    bytes getRLPData();
+    virtual bytes getRLPData() override;
 
-    // @override
-    Object::ObjectType getObjectType() const { return Object::BlockType; }
+    virtual Object::ObjectType getObjectType() const override { return Object::ProducerType; }
 
 private:
     Address m_address;
     int64_t m_timestamp;
-    std::map<Address, uint64_t> m_votersMap;
     uint64_t m_votes;
+    std::map<Address, uint64_t> m_voters;
 };
 
 extern Producer EmptyProducer;
+
+using ProducerPtr = std::shared_ptr<Producer>;
+
+using Producers = std::vector<Producer>;
+
+using ProducersRef = Producers&;
+
+using ProducersConstRef = Producers const&;
+
+/*
+ * ProducerSnapshot: used by producer server
+ */
+class ProducerSnapshot: public Object {
+public:
+    ProducerSnapshot() {}
+
+    ProducerSnapshot(bytesConstRef data);
+
+    ProducerSnapshot(bytes const& data): ProducerSnapshot(bytesConstRef(&data)) {}
+
+    ProducerSnapshot& operator=(ProducerSnapshot const& ps);
+
+    void populate(bytesConstRef data);
+
+    void populate(bytes const& data) { populate(bytesConstRef(&data)); }
+
+    int64_t getTimestamp() const { return m_timestamp; }
+
+    size_t size() const { return m_producers.size(); }
+
+    ProducersConstRef getProducers() const { return m_producers; }
+
+    void setTimestamp(int64_t timestamp) { m_timestamp = timestamp; }
+
+    void addProducer(Producer const& producer);
+
+    void deleteProducer(Producer const& producer);
+
+    void clear() { m_producers.clear(); }
+
+    void streamRLP(RLPStream& rlpStream) const;
+
+    bool isExist(Address const& address) const;
+
+    virtual bytes getKey() override;
+
+    virtual bytes getRLPData() override;
+
+    virtual Object::ObjectType getObjectType() const override { return Object::ProducerSnapshotType; }
+
+private:
+    int64_t m_timestamp;
+    Producers m_producers;
+};
 
 } // end of namespace

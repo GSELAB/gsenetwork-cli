@@ -13,8 +13,12 @@
 #include <core/Exceptions.h>
 #include <crypto/SHA3.h>
 
-using namespace core;
 using namespace crypto;
+
+namespace core {
+Transaction EmptyTransaction;
+
+TransactionPtr EmptyTransactionPtr = TransactionPtr();
 
 const uint32_t Transaction::ContractCreation = 0;
 const uint32_t Transaction::ContractCall = 1;
@@ -62,7 +66,7 @@ Transaction::Transaction(bytesConstRef data)
         m_type = rlp[index = 1].toInt<uint32_t>();
         m_sender = rlp[index = 2].toHash<Address>(RLP::VeryStrict) ;
         m_recipient = rlp[index = 3].toHash<Address>(RLP::VeryStrict);
-        m_timestamp = rlp[index = 4].toInt<uint64_t>();
+        m_timestamp = rlp[index = 4].toInt<int64_t>();
         m_data = rlp[index = 5].toBytes();
         m_value = rlp[index = 6].toInt<uint64_t>();
 
@@ -91,13 +95,13 @@ void Transaction::streamRLP(RLPStream& rlpStream) const
     */
 
     rlpStream.appendList(TRANSACTION_FIELDS_ALL);
-    rlpStream << m_chainID
+    rlpStream << (bigint) m_chainID
               << m_type
               << m_sender
               << m_recipient
-              << m_timestamp
+              << (bigint) m_timestamp
               << m_data
-              << m_value;
+              << (bigint) m_value;
 
     rlpStream << m_signature.v
               << (u256)m_signature.r
@@ -107,23 +111,18 @@ void Transaction::streamRLP(RLPStream& rlpStream) const
 void Transaction::streamRLPContent(RLPStream& rlpStream) const
 {
     rlpStream.appendList(TRANSACTION_FIELDS_WITHOUT_SIG);
-    rlpStream << m_chainID
+    rlpStream << (bigint) m_chainID
               << m_type
               << m_sender
               << m_recipient
-              << m_timestamp
+              << (bigint) m_timestamp
               << m_data
-              << m_value;
+              << (bigint) m_value;
 }
 
 // the sha3 of the transaction not include signature
 h256 const& Transaction::getHash()
 {
-    /*
-    if (m_hash)
-        return m_hash;
-    */
-
     RLPStream rlpStream;
     streamRLPContent(rlpStream);
     m_hash = sha3(&rlpStream.out());
@@ -137,7 +136,6 @@ void Transaction::sign(Secret const& secret)
     auto signature = crypto::sign(secret, sha3(&rlpStream.out()));
     SignatureStruct sig = *(SignatureStruct const*)&signature;
     if (sig.isValid()) {
-        CINFO << "Transaction sing sucess!";
         m_signature = sig;
     }
 }
@@ -186,4 +184,6 @@ bytes Transaction::getRLPData()
     core::RLPStream rlpStream;
     streamRLP(rlpStream);
     return rlpStream.out();
+}
+
 }

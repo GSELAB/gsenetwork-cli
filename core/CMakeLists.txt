@@ -5,12 +5,14 @@ SET(core_source
     Log.cpp
     RLP.cpp
     Address.cpp
+    Status.cpp
     Account.cpp
     TransactionReceipt.cpp
     Transaction.cpp
     Block.cpp
     Producer.cpp
     SubChain.cpp
+    AttributeState.cpp
     Ballot.cpp
     Worker.cpp
     Task.cpp

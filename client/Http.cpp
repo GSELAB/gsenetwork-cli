@@ -1,4 +1,6 @@
 #include <client/Http.h>
+#include <core/Log.h>
+#include <crypto/GKey.h>
 
 using namespace core;
 using namespace client;

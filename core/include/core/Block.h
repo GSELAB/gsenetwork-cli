@@ -23,8 +23,6 @@
 
 namespace core {
 
-class Repository;
-
 class Block;
 extern Block EmptyBlock;
 
@@ -32,7 +30,6 @@ extern Block EmptyBlock;
 #define BLOCK_HEADER_FIELDS_ALL (9 + 3)
 
 class BlockHeader: public Object {
-    friend class Repository;
 public:
     BlockHeader();
 
@@ -56,17 +53,23 @@ public:
 
     void populate(bytesConstRef data);
 
+    void setChainID(chain::ChainID chainID) { m_chainID = chainID; }
+
     void setProducer(Address const& producer) { m_producer = producer; }
 
     void setParentHash(h256 const& parentHash) { m_parentHash = parentHash; }
 
-    void setRoots(trie::TrieType const& mkl, trie::TrieType const& t, trie::TrieType const& r);
+    void setRoots(trie::H256 const& mkl, trie::H256 const& t, trie::H256 const& r);
 
     void setNumber(uint64_t number) { m_number = number; }
 
     void setTimestamp(int64_t timestamp) { m_timestamp = timestamp; }
 
     void setExtra(bytes const& extra) { m_extra = extra; }
+
+    void setSignature(Signature const& sig) { m_signature = SignatureStruct(sig); }
+
+    void setSignature(SignatureStruct const& sig) { m_signature = sig; }
 
     void sign(Secret const& priv);
 
@@ -76,11 +79,11 @@ public:
 
     h256 const& getParentHash() const { return m_parentHash; }
 
-    trie::TrieType const& getTrieRoot() const { return m_mklRoot; }
+    trie::H256 const& getTrieRoot() const { return m_mklRoot; }
 
-    trie::TrieType const& getTxRoot() const { return m_transactionsRoot; }
+    trie::H256 const& getTxRoot() const { return m_transactionsRoot; }
 
-    trie::TrieType const& getReceiptRoot() const { return m_receiptRoot; }
+    trie::H256 const& getReceiptRoot() const { return m_receiptRoot; }
 
     uint64_t getNumber() const { return m_number; }
 
@@ -88,7 +91,7 @@ public:
 
     bytes const& getExtra() const { return m_extra; }
 
-    h256& getHash();
+    h256 const& getHash();
 
     SignatureStruct const& getSignature() const { return m_signature; }
 
@@ -107,9 +110,9 @@ private:
     chain::ChainID m_chainID = chain::DEFAULT_GSE_NETWORK;
     Address  m_producer;
     h256 m_parentHash;
-    trie::TrieType m_mklRoot;
-    trie::TrieType m_transactionsRoot;
-    trie::TrieType m_receiptRoot;
+    trie::H256 m_mklRoot;
+    trie::H256 m_transactionsRoot;
+    trie::H256 m_receiptRoot;
     uint64_t m_number;
     int64_t m_timestamp;
     bytes m_extra;
@@ -127,6 +130,8 @@ public:
     Block(BlockHeader const&blockHeader);
 
     Block(Block const& block);
+
+    Block(bytes const& data): Block(bytesConstRef(&data)) {}
 
     Block(bytesConstRef data);
 
@@ -148,9 +153,15 @@ public:
 
     void addTransactionReceipt(TransactionReceipt const& transactionReceipt);
 
+    trie::H256 getTransactionMerkle();
+
     void setRoots();
 
     void sign(Secret const& priv) { m_blockHeader.sign(priv); }
+
+    void setSyncBlock() { m_syncBlock = true; }
+
+    bool isSyncBlock() const { return m_syncBlock; }
 
     Address const& getProducer() const { return m_blockHeader.getProducer(); }
 
@@ -164,27 +175,36 @@ public:
 
     uint64_t getNumber() const { return m_blockHeader.getNumber(); }
 
-    h256& getHash() { return m_blockHeader.getHash(); }
+    int64_t getTimestamp() const { return m_blockHeader.getTimestamp(); }
+
+    h256 getParentHash() const { return m_blockHeader.getParentHash(); }
+
+    h256 const& getHash() { return m_blockHeader.getHash(); }
 
     SignatureStruct const& getSignature() const { return m_blockHeader.getSignature(); }
 
-    // @override
-    bytes getKey();
+    virtual bytes getKey() override;
 
-    // @override
-    bytes getRLPData();
+    virtual bytes getRLPData() override;
 
-    // @override
-    Object::ObjectType getObjectType() const { return Object::BlockType; }
+    virtual Object::ObjectType getObjectType() const override { return Object::BlockType; }
 
 private:
     BlockHeader m_blockHeader;
+
     Transactions m_transactions;
+
     TransactionReceipts m_transactionReceipts;
 
-    //h256 m_hash;
+    bool m_syncBlock = false;
 };
 
 using BlockID = h256;
+
+using BlockPtr = std::shared_ptr<Block>;
+
+using Blocks = std::vector<Block>;
+
+extern BlockPtr EmptyBlockPtr;
 
 }  /* namespace end */

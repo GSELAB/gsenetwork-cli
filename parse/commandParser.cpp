@@ -1,14 +1,18 @@
 #include <string>
 #include <sstream>
-#include "client/Http.h"
-#include "parser/commandParser.hpp"
+#include <client/Http.h>
+#include <parser/commandParser.hpp>
+
+#include <crypto/Common.h>
+#include <crypto/GKey.h>
 
 using namespace cmdparse;
 using namespace core;
+using namespace crypto;
 
 namespace hdl
 {
-    std::string default_host = "127.0.0.1";
+    std::string default_host = "132.232.52.144";
     std::string default_port = "50505";
     int default_version = 11;
 
