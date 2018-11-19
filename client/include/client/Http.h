@@ -16,54 +16,59 @@
 using tcp = boost::asio::ip::tcp;
 namespace http = beast::http;
 
-namespace client{
+namespace client {
 
-class Client{
+class Client {
+public:
+    Client() = default;
+
+    Client(std::string const& host, std::string const& port, int version = 11): m_host(host), m_port(port) {}
+
+    void login();
+
+    void logout();
+
+    void getBlock(std::string const& cmd, uint64_t number);
+
+    void getVersion(std::string const& cmd);
+
+    void transfer(std::string const& cmd, std::string const& recipient, uint64_t value);
+
+    void toBeProducer(std::string const& cmd);
+
+    void vote(std::string const& cmd, core::Ballot& ballot);
 
 public:
-        Client() = default;
+    void setHost(std::string const& host) { m_host = host; }
 
-        Client(const std::string & host, const std::string & port, const int version=11):m_host(host),m_port(port){}
+    std::string const& getHost() const { return m_host; }
 
-        void login();
+    void setPort(std::string const& port) { m_port = port; }
 
-        void logout();
+    std::string const& getPort() const { return m_port; }
 
-        void getblock(const std::string & target, const uint64_t blocknumber);
+    void setVersion(int version) { m_version = version; }
 
-        void getversion(const std::string & target);
+    int getVersion() const { return m_version; }
 
-        void transfer(const std::string & target, const std::string & recipient, uint64_t value);
+protected:
+    void checkLogin();
 
-        void toBeProducer(const std::string & target);
+    void send(std::string const& cmd, Json::Value const& value, std::function<void(std::string const&)> callback);
 
-        void vote(const std::string & target, core::Ballot & ballot);
+    void broadcast(core::Transaction& transaction);
 
-        void sethost(const std::string & host){m_host = host;}
-
-        const std::string gethost(){return m_host;}
-
-        void setport(const std::string & port){m_port = port;}
-
-        const std::string getport(){return m_port;}
-
-        void setversion(const int version){m_version = version;}
-
-        const int getversion(){return m_version;}
 private:
-        void broadcast(core::Transaction & transaction);
-private:
-        std::string m_host = "127.0.0.1";
-        std::string m_port = "50505";
-        int m_version = 11;
+    std::string m_host = "127.0.0.1";
+    std::string m_port = "50505";
+    int m_version = 11;
 
-        crypto::GKey m_key;
-        bool m_isLogin = false;
+    crypto::GKey m_key;
+    bool m_isLogin = false;
 
-        boost::asio::io_service m_ios;
-        boost::asio::ip::tcp::resolver m_resolver{m_ios};
-        boost::asio::ip::tcp::socket m_socket{m_ios};
+    boost::asio::io_service m_ios;
+    boost::asio::ip::tcp::resolver m_resolver{m_ios};
+    boost::asio::ip::tcp::socket m_socket{m_ios};
 };
 
-
-}// client
+}
