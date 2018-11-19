@@ -46,13 +46,7 @@ HunterGate(
     LOCAL
 )
 
-
-# ----------------------- GSENetwork-CLI Project ----------------------- #
-
-
-project (GSENetwork-CLI)
-
-
+PROJECT(GSENetwork-CLI)
 SET(PROJECT_VERSION 1.0)
 
 cable_set_build_type(DEFAULT RelWithDebInfo CONFIGURATION_TYPES Debug;Release;RelWithDebInfo)
@@ -110,8 +104,8 @@ CONFIGURE_PROJECT()
 
 INCLUDE_DIRECTORIES(
     ${Boost_INCLUDE_DIR}
-    ${Boost_INCLUDE_DIR}
     "${PROJECT_SOURCE_DIR}/core/include"
+    "${PROJECT_SOURCE_DIR}/config/include"
     "${PROJECT_SOURCE_DIR}/crypto/include"
     "${PROJECT_SOURCE_DIR}/utils/include"
     "${PROJECT_SOURCE_DIR}/chain/include"
