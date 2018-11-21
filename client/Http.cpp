@@ -10,7 +10,7 @@ using namespace client;
 using namespace crypto;
 using namespace chain;
 
-Secret sec("2A718F3C6B6B6556081D8F4598FD12EF8A14257A47AA9C974F0362E0F61B12A8");
+Secret sec("BFCD34B08F053772E5D93D9D67410287697C7F93F3C49D48890EC4916B246BA7");
 Secret EmptySecret;
 
 void Client::login()
@@ -110,6 +110,19 @@ void Client::getBalance(std::string const& cmd, std::string const& target)
             } else {
                 throw ClientException("transfer - parse json from rpc error.");
             }
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
+    }
+}
+
+void Client::getProducer(std::string const& cmd, std::string const& target)
+{
+    try {
+        Address targetAddress(target);
+        Json::Value requestProducer = toRequestProducer(targetAddress);
+        send(cmd, requestProducer, [this] (std::string const& buffer) {
+            std::cout << buffer << std::endl;
         });
     } catch(std::exception const& e) {
         CERROR << e.what();

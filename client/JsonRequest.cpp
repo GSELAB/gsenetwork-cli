@@ -7,7 +7,7 @@ namespace client {
 Json::Value toRequestBlock(uint64_t number)
 {
     Json::Value result;
-    result["blockNumber"] = toJS(number);
+    result["blockNumber"] = number;
     return result;
 }
 
@@ -29,7 +29,7 @@ Json::Value toRequestTransfer(Address const& sender, Address const& recipient, u
     Json::Value result;
     result["sender"] = toJS(sender);
     result["recipient"] = toJS(recipient);
-    result["value"] = toJS(value);
+    result["value"] = value;
     return result;
 }
 
@@ -42,6 +42,13 @@ Json::Value toRequestVote(Address const& sender, Ballot& ballot)
 }
 
 Json::Value toRequestBalance(Address const& address)
+{
+    Json::Value result;
+    result["address"] = toJS(address);
+    return result;
+}
+
+Json::Value toRequestProducer(Address const& address)
 {
     Json::Value result;
     result["address"] = toJS(address);

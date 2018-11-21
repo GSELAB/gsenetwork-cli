@@ -16,4 +16,6 @@ Json::Value toRequestTransfer(Address const& sender, Address const& recipient, u
 Json::Value toRequestVote(Address const& sender, Ballot& ballot);
 
 Json::Value toRequestBalance(Address const& address);
+
+Json::Value toRequestProducer(Address const& address);
 }
