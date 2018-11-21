@@ -63,6 +63,10 @@ namespace hdl
             target = vm["getbalance"].as<std::string>();
             client.getBalance("/get_balance", target);
             return commandParser::SUCCESS;
+        } else if (vm.count("getproducer")) {
+            target = vm["getproducer"].as<std::string>();
+            client.getProducer("/get_producer", target);
+            return commandParser::SUCCESS;
         } else if (vm.count("getversion")) {
             client.getVersion("/get_version");
             return commandParser::SUCCESS;
@@ -102,7 +106,7 @@ namespace hdl
                 ballot.put(candidate);
             }
 
-            client.vote("/create_vote", ballot);
+            client.vote("/vote", ballot);
             return commandParser::SUCCESS;
         } else {
             return commandParser::ERROR_IN_COMMAND_LINE;
@@ -123,6 +127,7 @@ void commandParser::init_command_line()
         desc.add_options()
             ("help,?", "Print help messages")
             ("quit,q", "quit")
+            ("getproducer", po::value<std::string>(),"get producer")
             ("getbalance", po::value<std::string>(),"get account balance")
             ("getblock", po::value<uint64_t>(),"get a block by number")
             ("getversion", "get version")
