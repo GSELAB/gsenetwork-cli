@@ -1,3 +1,5 @@
+#include <string>
+
 #include <client/Http.h>
 #include <core/Log.h>
 #include <crypto/GKey.h>
@@ -8,7 +10,7 @@ using namespace client;
 using namespace crypto;
 using namespace chain;
 
-Secret sec("63D065F2D813D790427C8583E384359828BFF6A9F7012F9D28C111D7F2A2EF88");
+Secret sec("2A718F3C6B6B6556081D8F4598FD12EF8A14257A47AA9C974F0362E0F61B12A8");
 Secret EmptySecret;
 
 void Client::login()
@@ -95,6 +97,25 @@ void Client::getBlock(std::string const& cmd, uint64_t number)
     }
 }
 
+void Client::getBalance(std::string const& cmd, std::string const& target)
+{
+    try {
+        Address targetAddress(target);
+        Json::Value requestBalance = toRequestBalance(targetAddress);
+        send(cmd, requestBalance, [this] (std::string const& buffer) {
+            Json::Reader reader(Json::Features::strictMode());
+            Json::Value root;
+            if(reader.parse(buffer, root)) {
+                std::cout << root["balance"].asUInt64() << std::endl;
+            } else {
+                throw ClientException("transfer - parse json from rpc error.");
+            }
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
+    }
+}
+
 void Client::transfer(std::string const& cmd, std::string const& recipient, uint64_t value)
 {
     try {
@@ -120,6 +141,7 @@ void Client::transfer(std::string const& cmd, std::string const& recipient, uint
     }
 
 }
+
 void Client::toBeProducer(std::string const& cmd)
 {
     try {

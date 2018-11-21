@@ -14,4 +14,6 @@ Json::Value toRequestVersion();
 Json::Value toRequestTransfer(Address const& sender, Address const& recipient, uint64_t value);
 
 Json::Value toRequestVote(Address const& sender, Ballot& ballot);
+
+Json::Value toRequestBalance(Address const& address);
 }
