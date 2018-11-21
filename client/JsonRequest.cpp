@@ -17,6 +17,7 @@ Json::Value toRequestBeProducer(Address const& address)
     result["sender"] = toJS(address);
     return result;
 }
+
 Json::Value toRequestVersion()
 {
     Json::Value result;
@@ -37,6 +38,13 @@ Json::Value toRequestVote(Address const& sender, Ballot& ballot)
     Json::Value result;
     result["sender"] = toJS(sender);
     result["data"] = toJS(ballot.getRLPData());
+    return result;
+}
+
+Json::Value toRequestBalance(Address const& address)
+{
+    Json::Value result;
+    result["address"] = toJS(address);
     return result;
 }
 }

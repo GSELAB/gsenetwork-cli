@@ -29,6 +29,7 @@ namespace hdl
         std::string host;
         std::string port;
         std::string recipient;
+        std::string target;
         uint64_t value;
         uint64_t number;
         std::vector<std::string> candidates;
@@ -57,6 +58,10 @@ namespace hdl
         } else if (vm.count("getblock")) {
             number = vm["getblock"].as<uint64_t>();
             client.getBlock("/get_block", number);
+            return commandParser::SUCCESS;
+        } else if (vm.count("getbalance")) {
+            target = vm["getbalance"].as<std::string>();
+            client.getBalance("/get_balance", target);
             return commandParser::SUCCESS;
         } else if (vm.count("getversion")) {
             client.getVersion("/get_version");
@@ -115,22 +120,23 @@ void commandParser::init()
 void commandParser::init_command_line()
 {
     try {
-    desc.add_options()
-        ("help,?", "Print help messages")
-        ("quit,q", "quit")
-        ("getblock", po::value<uint64_t>(),"get a block by number")
-        ("getversion", "get version")
-        ("transfer", "transfer accounts")
-        ("tobeproducer","to be a producer")
-        ("vote", "vote")
-        ("login","login")
-        ("logout","log out")
-        ("host,h", po::value<std::string>(), "host ip")
-        ("port,p", po::value<std::string>(), "port number")
-        ("recipient,r",po::value<std::string>(),"recipient")
-        ("value,v", po::value<uint64_t>(), "transfer amount")
-        ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
-        ("ballot,b",po::value<std::vector<uint64_t> >(),"ballot");
+        desc.add_options()
+            ("help,?", "Print help messages")
+            ("quit,q", "quit")
+            ("getbalance", po::value<std::string>(),"get account balance")
+            ("getblock", po::value<uint64_t>(),"get a block by number")
+            ("getversion", "get version")
+            ("transfer", "transfer accounts")
+            ("tobeproducer","to be a producer")
+            ("vote", "vote")
+            ("login","login")
+            ("logout","log out")
+            ("host,h", po::value<std::string>(), "host ip")
+            ("port,p", po::value<std::string>(), "port number")
+            ("recipient,r",po::value<std::string>(),"recipient")
+            ("value,v", po::value<uint64_t>(), "transfer amount")
+            ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
+            ("ballot,b",po::value<std::vector<uint64_t> >(),"ballot");
 
     } catch(std::exception& e) {
         CERROR << "Unhandled Exception reached the top of init_command_line: "
