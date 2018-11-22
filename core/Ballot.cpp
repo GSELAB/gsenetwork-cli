@@ -52,13 +52,11 @@ bool Candidate::operator!=(Candidate const& candidate) const
     return !operator==(candidate);
 }
 
-// @override
 bytes Candidate::getKey()
 {
     return bytes();
 }
 
-// @override
 bytes Candidate::getRLPData()
 {
     RLPStream rlpStream;
@@ -70,7 +68,7 @@ Ballot::Ballot(bytesConstRef data)
 {
     try {
         RLP rlp(data);
-        if (rlp.isList()) {
+        if (rlp.isList() && rlp.itemCount() > 0) {
             for (unsigned i = 0; i < rlp.itemCount(); i++) {
                 bytesConstRef itemRef = rlp[i].data();
                 Candidate candidate(itemRef);
@@ -121,19 +119,17 @@ void Ballot::put(Candidate const& candidate)
 void Ballot::streamRLP(RLPStream& rlpStream) const
 {
     rlpStream.appendList(getCandidateSetSize());
-    for (auto i = m_candidateVector.begin(); i != m_candidateVector.end(); i++) {
-        Candidate candidate = *i;
-        rlpStream.append(candidate.getRLPData());
+    for (auto& i : m_candidateVector) {
+        Candidate candidate = i;
+        rlpStream.appendRaw(candidate.getRLPData());
     }
 }
 
-// @override
 bytes Ballot::getKey()
 {
     return bytes();
 }
 
-// @override
 bytes Ballot::getRLPData()
 {
     RLPStream rlpStream;
