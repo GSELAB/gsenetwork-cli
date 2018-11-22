@@ -59,7 +59,6 @@ Transaction::Transaction(bytesConstRef data)
     try {
         if (!rlp.isList() || rlp.itemCount() != TRANSACTION_FIELDS_ALL) {
             BOOST_THROW_EXCEPTION(std::range_error("transaction RLP must be a list"));
-            // BOOST_THROW_EXCEPTION(errinfo_comment("transaction RLP must be a list"));
         }
 
         m_chainID = rlp[index = 0].toInt<chain::ChainID>();
@@ -70,13 +69,9 @@ Transaction::Transaction(bytesConstRef data)
         m_data = rlp[index = 5].toBytes();
         m_value = rlp[index = 6].toInt<uint64_t>();
 
-        int v = rlp[index = 7].toInt<int>();
-        h256 r = rlp[index = 8].toInt<u256>();
-        h256 s = rlp[index = 9].toInt<u256>();
-        m_signature = SignatureStruct(r, s, v);
+        Signature sig = rlp[7].toHash<Signature>(RLP::VeryStrict);
+        m_signature = *(SignatureStruct*)&sig;
     } catch (Exception& e) {
-        //e << errinfo_name("Invalid transaction format") << BadFieldError(index, toHex(rlp[index].data().toBytes()));
-        //throw;
         BOOST_THROW_EXCEPTION(e);
     }
 }
@@ -88,24 +83,15 @@ Transaction::Transaction(bytes const& data): Transaction(&data)
 
 void Transaction::streamRLP(RLPStream& rlpStream) const
 {
-    /* // How to make it signature
-    if (!m_signature) {
-        BOOST_THROW_EXCEPTION(std::range_error("Transaction is unsigned!"));
-    }
-    */
-
     rlpStream.appendList(TRANSACTION_FIELDS_ALL);
     rlpStream << (bigint) m_chainID
               << m_type
               << m_sender
               << m_recipient
-              << (bigint) m_timestamp;
-    rlpStream.appendRaw(m_data);
-    rlpStream << (bigint) m_value;
-
-    rlpStream << m_signature.v
-              << (u256)m_signature.r
-              << (u256)m_signature.s;
+              << (bigint) m_timestamp
+              << m_data
+              << (bigint) m_value;
+    rlpStream << *(Signature*)&m_signature;
 }
 
 void Transaction::streamRLPContent(RLPStream& rlpStream) const
@@ -115,18 +101,17 @@ void Transaction::streamRLPContent(RLPStream& rlpStream) const
               << m_type
               << m_sender
               << m_recipient
-              << (bigint) m_timestamp;
-    rlpStream.appendRaw(m_data);
-    rlpStream << (bigint) m_value;
+              << (bigint) m_timestamp
+              << m_data
+              << (bigint) m_value;
 }
 
 // the sha3 of the transaction not include signature
-h256 const& Transaction::getHash()
+h256 Transaction::getHash() const
 {
     RLPStream rlpStream;
     streamRLPContent(rlpStream);
-    m_hash = sha3(&rlpStream.out());
-    return m_hash;
+    return sha3(&rlpStream.out());
 }
 
 void Transaction::sign(Secret const& secret)
@@ -156,15 +141,8 @@ Transaction& Transaction::operator=(Transaction const& transaction)
 
 bool Transaction::operator==(Transaction const& transaction) const
 {
-    return (m_chainID == transaction.getChainID()) &&
-        (m_type == transaction.getType()) &&
-        (m_sender == transaction.getSender()) &&
-        (m_recipient == transaction.getRecipient()) &&
-        (m_data == transaction.getData()) &&
-        (m_timestamp == transaction.getTimestamp()) &&
-        (m_value == transaction.getValue());
-
-        // ???????? <should the signature compare ?> boost::optional<SignatureStruct> m_signature;
+    h256 txHash = transaction.getHash();
+    return getHash() == txHash;
 }
 
 bool Transaction::operator!=(Transaction const& transaction) const
@@ -172,18 +150,15 @@ bool Transaction::operator!=(Transaction const& transaction) const
     return !operator==(transaction);
 }
 
-// @override
 bytes Transaction::getKey()
 {
     return getHash().asBytes();
 }
 
-// @override
 bytes Transaction::getRLPData()
 {
     core::RLPStream rlpStream;
     streamRLP(rlpStream);
     return rlpStream.out();
 }
-
 }
