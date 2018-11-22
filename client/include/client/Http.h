@@ -42,6 +42,8 @@ public:
 
     void getProducer(std::string const& cmd, std::string const& target);
 
+    void getAccount(std::string const& cmd, std::string const& target);
+
 public:
     void setHost(std::string const& host) { m_host = host; }
 

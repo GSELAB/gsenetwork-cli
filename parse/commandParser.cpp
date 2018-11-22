@@ -63,6 +63,10 @@ namespace hdl
             target = vm["getbalance"].as<std::string>();
             client.getBalance("/get_balance", target);
             return commandParser::SUCCESS;
+        } else if (vm.count("getaccount")) {
+            target = vm["getaccount"].as<std::string>();
+            client.getAccount("/get_account", target);
+            return commandParser::SUCCESS;
         } else if (vm.count("getproducer")) {
             target = vm["getproducer"].as<std::string>();
             client.getProducer("/get_producer", target);
@@ -127,6 +131,7 @@ void commandParser::init_command_line()
         desc.add_options()
             ("help,?", "Print help messages")
             ("quit,q", "quit")
+            ("getaccount", po::value<std::string>(),"get account")
             ("getproducer", po::value<std::string>(),"get producer")
             ("getbalance", po::value<std::string>(),"get account balance")
             ("getblock", po::value<uint64_t>(),"get a block by number")
