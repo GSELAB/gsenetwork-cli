@@ -72,7 +72,7 @@ Ballot::Ballot(bytesConstRef data)
         RLP rlp(data);
         if (rlp.isList()) {
             for (unsigned i = 0; i < rlp.itemCount(); i++) {
-                bytesConstRef itemRef = rlp[i].toBytesConstRef();
+                bytesConstRef itemRef = rlp[i].data();
                 Candidate candidate(itemRef);
                 m_candidateVector.push_back(candidate);
             }
