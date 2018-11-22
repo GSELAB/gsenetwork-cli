@@ -54,4 +54,11 @@ Json::Value toRequestProducer(Address const& address)
     result["address"] = toJS(address);
     return result;
 }
+
+Json::Value toRequestAccount(Address const& address)
+{
+    Json::Value result;
+    result["address"] = toJS(address);
+    return result;
+}
 }

@@ -116,6 +116,19 @@ void Client::getBalance(std::string const& cmd, std::string const& target)
     }
 }
 
+void Client::getAccount(std::string const& cmd, std::string const& target)
+{
+    try {
+        Address targetAddress(target);
+        Json::Value requestAccount = toRequestAccount(targetAddress);
+        send(cmd, requestAccount, [this] (std::string const& buffer) {
+            std::cout << buffer << std::endl;
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
+    }
+}
+
 void Client::getProducer(std::string const& cmd, std::string const& target)
 {
     try {
