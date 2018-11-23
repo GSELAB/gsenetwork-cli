@@ -22,7 +22,7 @@ namespace hdl
     int command_handler(po::variables_map & vm, po::options_description & desc)
     {
         if (vm.count("quit")) {
-            std::cout<<"program is starting exit"<<std::endl;
+            std::cout<<"program is starting to exit"<<std::endl;
             exit(0);
         }
 
@@ -30,6 +30,8 @@ namespace hdl
         std::string port;
         std::string recipient;
         std::string target;
+        std::string privateKey;
+        std::string txHash;
         uint64_t value;
         uint64_t number;
         std::vector<std::string> candidates;
@@ -50,14 +52,33 @@ namespace hdl
                       << desc << std::endl;
             return commandParser::SUCCESS;
         } else if (vm.count("login")) {
-            client.login();
+            if (vm.count("private")) {
+                privateKey = vm["private"].as<std::string>();
+            }
+            else {
+                privateKey = "";
+            }
+            client.login(privateKey);
             return commandParser::SUCCESS;
         } else if (vm.count("logout")) {
             client.logout();
             return commandParser::SUCCESS;
+        } else if (vm.count("getheight")) {
+            client.getHeight("/get_height");
+            return commandParser::SUCCESS;
+        } else if (vm.count("getsolidifyheight")) {
+            client.getHeight("/get_solidify_height");
+            return commandParser::SUCCESS;
+        } else if (vm.count("getproducerlist")) {
+            client.getProducerList("/get_producer_list");
+            return commandParser::SUCCESS;
         } else if (vm.count("getblock")) {
             number = vm["getblock"].as<uint64_t>();
             client.getBlock("/get_block", number);
+            return commandParser::SUCCESS;
+        } else if (vm.count("gettransaction")) {
+            txHash = vm["gettransaction"].as<std::string>();
+            client.getTransaction("/get_transaction", txHash);
             return commandParser::SUCCESS;
         } else if (vm.count("getbalance")) {
             target = vm["getbalance"].as<std::string>();
@@ -131,18 +152,23 @@ void commandParser::init_command_line()
         desc.add_options()
             ("help,?", "Print help messages")
             ("quit,q", "quit")
+            ("getheight", "get height")
+            ("getsolidifyheight", "get solidified height")
+            ("getproducerlist", "get producer list")
             ("getaccount", po::value<std::string>(),"get account")
             ("getproducer", po::value<std::string>(),"get producer")
             ("getbalance", po::value<std::string>(),"get account balance")
             ("getblock", po::value<uint64_t>(),"get a block by number")
+            ("gettransaction", po::value<std::string>(),"get transaction by its hash")
             ("getversion", "get version")
             ("transfer", "transfer accounts")
             ("tobeproducer","to be a producer")
             ("vote", "vote")
-            ("login","login")
+            ("login","login using private key")
+            ("private,p",po::value<std::string>(),"private key")
             ("logout","log out")
             ("host,h", po::value<std::string>(), "host ip")
-            ("port,p", po::value<std::string>(), "port number")
+            ("port,n", po::value<std::string>(), "port number")
             ("recipient,r",po::value<std::string>(),"recipient")
             ("value,v", po::value<uint64_t>(), "transfer amount")
             ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
