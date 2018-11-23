@@ -24,6 +24,31 @@ Json::Value toRequestVersion()
     return result;
 }
 
+Json::Value toRequestHeight()
+{
+    Json::Value result;
+    return result;
+}
+
+Json::Value toRequestSolidifyHeight()
+{
+    Json::Value result;
+    return result;
+}
+
+Json::Value toRequestProducerList()
+{
+    Json::Value result;
+    return result;
+}
+
+Json::Value toRequestTransaction(std::string const& txHash)
+{
+    Json::Value result;
+    result["txHash"] = toJS(txHash);
+    return result;
+}
+
 Json::Value toRequestTransfer(Address const& sender, Address const& recipient, uint64_t value)
 {
     Json::Value result;
