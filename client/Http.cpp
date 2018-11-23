@@ -10,18 +10,23 @@ using namespace client;
 using namespace crypto;
 using namespace chain;
 
-Secret sec("BFCD34B08F053772E5D93D9D67410287697C7F93F3C49D48890EC4916B246BA7");
-Secret EmptySecret;
-
-void Client::login()
+void Client::login(std::string privateKey)
 {
-    m_isLogin = true;
-    m_key.setSecret(sec);
+    if (privateKey.empty()) {
+        m_isLogin = false;
+        Secret EmptySecret;
+        m_key.setSecret(EmptySecret);
+    } else {
+        m_isLogin = true;
+        Secret sec(privateKey);
+        m_key.setSecret(sec);
+    }
 }
 
 void Client::logout()
 {
     m_isLogin = false;
+    Secret EmptySecret;
     m_key.setSecret(EmptySecret);
 }
 
@@ -84,12 +89,60 @@ void Client::getVersion(std::string const& cmd)
     }
 }
 
+void Client::getHeight(std::string const& cmd)
+{
+    try {
+        Json::Value requestHeight = toRequestHeight();
+        send(cmd, requestHeight, [this] (std::string const& buffer) {
+                std::cout << buffer << std::endl;
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
+    }
+}
+
+void Client::getSolidifyHeight(std::string const& cmd)
+{
+    try {
+        Json::Value requestSolidifyHeight = toRequestSolidifyHeight();
+        send(cmd, requestSolidifyHeight, [this] (std::string const& buffer) {
+                std::cout << buffer << std::endl;
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
+    }
+}
+
+void Client::getProducerList(std::string const& cmd)
+{
+    try {
+        Json::Value requestProducerList = toRequestProducerList();
+        send(cmd, requestProducerList, [this] (std::string const& buffer) {
+                std::cout << buffer << std::endl;
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
+    }
+}
+
 void Client::getBlock(std::string const& cmd, uint64_t number)
 {
     try {
         Json::Value requestBlock = toRequestBlock(number);
         CINFO << requestBlock.toStyledString();
         send(cmd, requestBlock, [this] (std::string const& buffer) {
+            std::cout << buffer << std::endl;
+        });
+    } catch(std::exception const& e) {
+        CERROR << e.what();
+    }
+}
+
+void Client::getTransaction(std::string const& cmd, std::string const& txHash)
+{
+    try {
+        Json::Value requestTransaction = toRequestTransaction(txHash);
+        send(cmd, requestTransaction, [this] (std::string const& buffer) {
             std::cout << buffer << std::endl;
         });
     } catch(std::exception const& e) {

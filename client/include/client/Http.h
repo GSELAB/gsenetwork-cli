@@ -24,13 +24,21 @@ public:
 
     Client(std::string const& host, std::string const& port, int version = 11): m_host(host), m_port(port) {}
 
-    void login();
+    void login(std::string privateKey);
 
     void logout();
 
     void getBlock(std::string const& cmd, uint64_t number);
 
+    void getTransaction(std::string const& cmd, std::string const& txHash);
+
     void getVersion(std::string const& cmd);
+
+    void getHeight(std::string const& cmd);
+
+    void getSolidifyHeight(std::string const& cmd);
+
+    void getProducerList(std::string const& cmd);
 
     void transfer(std::string const& cmd, std::string const& recipient, uint64_t value);
 

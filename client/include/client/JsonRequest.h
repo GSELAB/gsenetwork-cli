@@ -20,4 +20,12 @@ Json::Value toRequestBalance(Address const& address);
 Json::Value toRequestProducer(Address const& address);
 
 Json::Value toRequestAccount(Address const& address);
+
+Json::Value toRequestHeight();
+
+Json::Value toRequestSolidifyHeight();
+
+Json::Value toRequestTransaction(std::string const& txHash);
+
+Json::Value toRequestProducerList();
 }
