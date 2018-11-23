@@ -26,7 +26,6 @@
 using namespace std;
 using namespace cmdparse;
 
-
 int main(int argc, char **argv)
 {
     commandParser parser;
@@ -42,6 +41,11 @@ int main(int argc, char **argv)
     {
         std::cout<<"Enter Command:\n> ";
         std::getline(std::cin, input);
+        input.erase(0, input.find_first_not_of(" "));
+        input.erase(input.find_last_not_of(" ") + 1);
+        if (input.size() == 0) {
+            continue;
+        }
 
         std::vector<const char *> args;
         args.push_back(argv[0]); 
