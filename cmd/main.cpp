@@ -26,11 +26,6 @@
 using namespace std;
 using namespace cmdparse;
 
-void trim(std::string& str)
-{
-
-}
-
 int main(int argc, char **argv)
 {
     commandParser parser;
