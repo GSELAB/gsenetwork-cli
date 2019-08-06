@@ -40,7 +40,7 @@ public:
 
     void getProducerList(std::string const& cmd);
 
-    void transfer(std::string const& cmd, std::string const& recipient, uint64_t value);
+    void transfer(std::string const& cmd, std::string const& recipient,bytes const& data, uint64_t value);
 
     void toBeProducer(std::string const& cmd);
 

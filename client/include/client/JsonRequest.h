@@ -11,7 +11,7 @@ Json::Value toRequestBeProducer(Address const& address);
 
 Json::Value toRequestVersion();
 
-Json::Value toRequestTransfer(Address const& sender, Address const& recipient, uint64_t value);
+Json::Value toRequestTransfer(Address const& sender, Address const& recipient, bytes const& data, uint64_t value);
 
 Json::Value toRequestVote(Address const& sender, Ballot& ballot);
 

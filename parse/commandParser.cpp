@@ -29,6 +29,7 @@ namespace hdl
         std::string host;
         std::string port;
         std::string recipient;
+        bytes       data;
         std::string target;
         std::string privateKey;
         std::string txHash;
@@ -99,12 +100,16 @@ namespace hdl
             if (vm.count("recipient")) {
                 recipient = vm["recipient"].as<std::string>();
             }
-
+            if (vm.count("data")) {
+                data = toBytes(vm["data"].as<std::string>());
+            }
+            else{
+                data.clear();
+            }
             if (vm.count("value")) {
                 value = vm["value"].as<uint64_t>();
             }
-
-            client.transfer("/create_transaction", recipient, value);
+            client.transfer("/create_transaction", recipient, data, value);
             return commandParser::SUCCESS;
         } else if (vm.count("tobeproducer")) {
             client.toBeProducer("/create_producer");
@@ -170,6 +175,7 @@ void commandParser::init_command_line()
             ("host,h", po::value<std::string>(), "host ip")
             ("port,n", po::value<std::string>(), "port number")
             ("recipient,r",po::value<std::string>(),"recipient")
+            ("data,d", po::value<std::string>(), "contract code")
             ("value,v", po::value<uint64_t>(), "transfer amount")
             ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
             ("ballot,b",po::value<std::vector<uint64_t> >(),"ballot");
