@@ -49,12 +49,13 @@ Json::Value toRequestTransaction(std::string const& txHash)
     return result;
 }
 
-Json::Value toRequestTransfer(Address const& sender, Address const& recipient,bytes const& data, uint64_t value)
+Json::Value toRequestTransfer(Address const& sender, Address const& recipient, bytes const& data, uint64_t gas, uint64_t value)
 {
     Json::Value result;
     result["sender"] = toJS(sender);
     result["recipient"] = toJS(recipient);
     result["data"]  = toJS(data);
+    result["gas"] = gas;
     result["value"] = value;
     return result;
 }

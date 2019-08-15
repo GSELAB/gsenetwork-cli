@@ -34,9 +34,11 @@ public:
     static const uint32_t ContractCall;
 
     enum Type {
-        VoteType = 0x0,
-        TransferType = 0x01,
-        BeenProducerType = 0x02,
+        VoteType            = 0x0,
+        TransferType        = 0x01,
+        BeenProducerType    = 0x02,
+        CreationType        = 0x10,
+        CallType            = 0x11,
         UnknownType = 0xFFFFFFFF,
     };
 
@@ -45,7 +47,7 @@ public:
     Transaction(Transaction const& transaction);
 
     Transaction(chain::ChainID chainID, uint32_t type, Address const& sender, Address const& recipient,
-        uint64_t timestamp, bytes const& data, uint64_t value);
+        uint64_t timestamp, bytes const& data, uint64_t gas, uint64_t value);
 
     Transaction(bytesConstRef data);
 
@@ -94,6 +96,10 @@ public:
 
     bytes const& getData() const { return m_data; }
 
+    uint64_t getGas() const { return m_gas; }
+
+    uint64_t getGasPrice() const { return m_gasprice; }
+
     uint64_t getValue() const { return m_value; }
 
     SignatureStruct const& getSignature() const { return m_signature; }
@@ -111,6 +117,8 @@ private:
     Address m_recipient;
     int64_t m_timestamp;
     bytes m_data;
+    uint64_t m_gas;
+    uint64_t m_gasprice;
     uint64_t m_value;
     SignatureStruct m_signature;
 };

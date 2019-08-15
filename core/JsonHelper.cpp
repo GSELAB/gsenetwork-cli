@@ -184,9 +184,10 @@ Transaction toTransaction(Json::Value const& root)
     Address recipient = Address(root["recipient"].asString());
     int64_t timestamp = root["timestamp"].asInt64();
     std::string dataString = root["data"].asString();
+    uint64_t gas = root["gas"].asUInt64();
     uint64_t value = root["value"].asUInt64();
     std::string sigString = root["signature"].asString();
-    Transaction tx(chainID, type, sender, recipient, timestamp, core::js_util::jsToBytes(dataString), value);
+    Transaction tx(chainID, type, sender, recipient, timestamp, core::js_util::jsToBytes(dataString), gas, value);
     Signature sig(sigString);
     SignatureStruct ss(sig);
     tx.setSignature(ss);

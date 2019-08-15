@@ -195,12 +195,12 @@ void Client::getProducer(std::string const& cmd, std::string const& target)
     }
 }
 
-void Client::transfer(std::string const& cmd, std::string const& recipient, bytes const& data,uint64_t value)
+void Client::transfer(std::string const& cmd, std::string const& recipient, bytes const& data, uint64_t gas, uint64_t value)
 {
     try {
         checkLogin();
         Address recipientAddress(recipient);
-        Json::Value requestTransfer = toRequestTransfer(m_key.getAddress(), recipientAddress, data, value);
+        Json::Value requestTransfer = toRequestTransfer(m_key.getAddress(), recipientAddress, data, gas, value);
         //std::cout<< requestTransfer.asCString()<<std::endl;
         send(cmd, requestTransfer, [this] (std::string const& buffer) {
             Json::Reader reader(Json::Features::strictMode());

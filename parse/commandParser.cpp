@@ -30,6 +30,7 @@ namespace hdl
         std::string port;
         std::string recipient;
         bytes       data;
+        uint64_t    gas;
         std::string target;
         std::string privateKey;
         std::string txHash;
@@ -102,14 +103,17 @@ namespace hdl
             }
             if (vm.count("data")) {
                 data = toBytes(vm["data"].as<std::string>());
-            }
-            else{
-                data.clear();
+                if (vm.count("gas")) {
+                    gas = vm["gas"].as<uint64_t>();
+                }
+                else{
+                    return commandParser::ERROR_IN_COMMAND_LINE;
+                }
             }
             if (vm.count("value")) {
                 value = vm["value"].as<uint64_t>();
             }
-            client.transfer("/create_transaction", recipient, data, value);
+            client.transfer("/create_transaction", recipient, data, gas, value);
             return commandParser::SUCCESS;
         } else if (vm.count("tobeproducer")) {
             client.toBeProducer("/create_producer");
@@ -176,6 +180,7 @@ void commandParser::init_command_line()
             ("port,n", po::value<std::string>(), "port number")
             ("recipient,r",po::value<std::string>(),"recipient")
             ("data,d", po::value<std::string>(), "contract code")
+            ("gas,g", po::value<uint64_t>(), "gas")
             ("value,v", po::value<uint64_t>(), "transfer amount")
             ("candidate,c",po::value<std::vector<std::string> >(),"candidates")
             ("ballot,b",po::value<std::vector<uint64_t> >(),"ballot");
